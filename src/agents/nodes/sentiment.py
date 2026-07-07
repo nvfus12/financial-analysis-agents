@@ -3,6 +3,7 @@ from typing import Dict, Any, List
 from src.domain.models.state import AgentState
 from src.infrastructure.database.cache_repo import get_cached_news, save_news_cache
 from src.infrastructure.adapters.cafef_scraper import CafeFScraper
+from src.infrastructure.adapters.yfinance_adapter import YFinanceAdapter
 from src.infrastructure.adapters.finbert_adapter import FinBERTAdapter
 from src.infrastructure.adapters.gemini_adapter import GeminiAdapter
 from src.infrastructure.config import Config
@@ -17,17 +18,22 @@ def sentiment_node(state: AgentState) -> Dict[str, Any]:
     calculates stats, and evaluates market sentiment using Gemini LLM.
     """
     ticker = state.get("ticker", "").strip().upper()
+    market = state.get("market", "VN").strip().upper()
     logs = state.get("logs", [])
     
-    logs.append(f"[Sentiment Node] Starting news sentiment analysis for {ticker}.")
+    logs.append(f"[Sentiment Node] Starting news sentiment analysis for {ticker} (Market: {market}).")
     
     # 1. Fetch News and analyze sentiment (check SQLite cache first)
     articles = get_cached_news(ticker, max_age_hours=24.0)
     
     if not articles:
-        logs.append(f"[Sentiment Node] Cache miss or stale news for {ticker}. Scraping news...")
-        scraper = CafeFScraper()
-        raw_news = scraper.fetch_latest_news(ticker, limit=10)
+        logs.append(f"[Sentiment Node] Cache miss or stale news for {ticker}. Fetching news...")
+        if market == "US":
+            provider = YFinanceAdapter()
+        else:
+            provider = CafeFScraper()
+            
+        raw_news = provider.fetch_latest_news(ticker, limit=10)
         
         if raw_news:
             logs.append(f"[Sentiment Node] Scraped {len(raw_news)} headlines. Scoring sentiment via FinBERT...")

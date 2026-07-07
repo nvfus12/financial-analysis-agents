@@ -33,11 +33,11 @@ graph TD
 
 1.  **Orchestrator Agent**: Parses the user request, validates the ticker symbol, and schedules the execution of specialist agents based on the selected mode (`full`, `fundamental`, or `technical`).
 2.  **Fundamental Specialist (PDF RAG)**: 
-    *   Fetches stock metrics (P/E, ROE, P/B, EPS) dynamically.
+    *   Fetches stock metrics (P/E, ROE, P/B, EPS) dynamically. Uses `VnStockAdapter` for Vietnam and `YFinanceAdapter` for US stocks.
     *   Ingests uploaded quarterly/annual PDF reports, parses them (using PyPDF/LlamaParse), indexes them into a local persistent **ChromaDB** vector store, and runs a semantic search RAG pipeline to extract key balance-sheet details.
-3.  **Technical Specialist**: Computes moving averages (MA20, MA50), RSI, and MACD indicators on price history, generating trend signals.
-4.  **Sentiment Specialist**: Scrapes CafeF news headlines, runs sentiment scoring via a local **FinBERT** pipeline, and compiles market confidence metrics.
-5.  **Synthesis CIO Agent**: Reviews specialist insights, resolves conflicting signals, makes the final recommendation (BUY, SELL, or HOLD), compiles the markdown memo, and persists it into the SQLite history database.
+3.  **Technical Specialist**: Computes moving averages (MA20, MA50), RSI, and MACD indicators on price history, generating trend signals (resolving in `VND` or `USD` depending on market).
+4.  **Sentiment Specialist**: Scrapes CafeF news headlines for VN stocks, scrapes Yahoo Finance news for US stocks, runs sentiment scoring via a local **FinBERT** pipeline, and compiles market confidence metrics.
+5.  **Synthesis CIO Agent**: Reviews specialist insights, resolves conflicting signals, makes the final recommendation (BUY, SELL, or HOLD), compiles the markdown memo, and persists it into the SQLite history database with market attributes.
 
 ---
 
@@ -54,14 +54,16 @@ Designed for API key quota limitations:
 
 ### 3. Local SQLite Caching & Performance Tuning
 To avoid redundant web scraping and API costs, local SQLite cache repository tables handle:
-- **Stock Prices & Ratios Cache** (4-hour expiration TTL)
-- **CafeF Scraped News Cache** (24-hour expiration TTL)
+- **Stock Prices & Ratios Cache** (4-hour expiration TTL) for both VN (vnstock) and US (yfinance) markets.
+- **Scraped News Cache** (24-hour expiration TTL) covering CafeF and Yahoo Finance.
 - **Conversational State Checkpointing** (via LangGraph SQLiteSaver)
+- **Automatic Migration Schema Hooks**: Seamlessly alters history tables to inject the `market` attribute, preserving backwards compatibility.
 
 ### 4. Premium SaaS UI Dashboard
 - **Glassmorphic Slate Design**: Beautiful dark UI built using Streamlit with custom CSS.
 - **Bilingual Interface**: Toggle both UI text and LLM generated reports between **Tiếng Việt** and **English**.
-- **Interactive Plotly Charts**: Visualizes candlesticks, moving averages, RSI bands, and MACD histograms.
+- **Interactive Multi-Market Selector**: Added a "Market" selection dropdown next to the ticker symbol.
+- **Interactive Plotly Charts**: Visualizes candlesticks, moving averages, RSI bands, and MACD histograms, adapting the price axes label dynamically (e.g. `Price (USD)` or `Price (VND)`).
 - **Gemini-Style Sidebar**: A clean list of clickable recent chat links with inline deletion buttons and red-hover styles.
 
 ---
@@ -135,7 +137,7 @@ Open `http://localhost:8501` in your browser.
 ## 🧪 Testing & Verification
 
 ### 1. Run Unit Tests (Pytest)
-To verify financial formulas and caching layers:
+To verify financial formulas, cache repositories, and market adapters (`VnStockAdapter`, `YFinanceAdapter`):
 ```bash
 python -m pytest tests/
 ```

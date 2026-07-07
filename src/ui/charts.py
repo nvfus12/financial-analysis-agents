@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from typing import Dict, Any
 
-def create_financial_chart(df: pd.DataFrame) -> go.Figure:
+def create_financial_chart(df: pd.DataFrame, market: str = "VN") -> go.Figure:
     """
     Generates a premium, unified dark-themed financial chart.
     Includes Candlestick + MA overlays, RSI sub-chart, and MACD indicators.
@@ -149,7 +149,8 @@ def create_financial_chart(df: pd.DataFrame) -> go.Figure:
     )
 
     # Configure axes formatting
-    fig.update_yaxes(title_text="Price (VND)", row=1, col=1, gridcolor="rgba(255, 255, 255, 0.05)")
+    currency_label = "USD" if market == "US" else "VND"
+    fig.update_yaxes(title_text=f"Price ({currency_label})", row=1, col=1, gridcolor="rgba(255, 255, 255, 0.05)")
     fig.update_yaxes(title_text="RSI", row=2, col=1, range=[10, 90], gridcolor="rgba(255, 255, 255, 0.05)")
     fig.update_yaxes(title_text="MACD", row=3, col=1, gridcolor="rgba(255, 255, 255, 0.05)")
     fig.update_xaxes(gridcolor="rgba(255, 255, 255, 0.05)")

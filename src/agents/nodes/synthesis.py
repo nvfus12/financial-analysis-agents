@@ -1,5 +1,6 @@
 import re
 import logging
+from datetime import datetime
 from typing import Dict, Any
 from src.domain.models.state import AgentState
 from src.domain.models.report import Recommendation
@@ -31,16 +32,23 @@ def synthesis_node(state: AgentState) -> Dict[str, Any]:
     # Get current price
     tech_signals = state.get("technical_signals", {})
     curr_price = tech_signals.get("current_price", 0.0)
-    price_str = f"{curr_price:,.2f} VND" if curr_price > 0 else "Not Available"
+    market = state.get("market", "VN").strip().upper()
+    currency_label = "USD" if market == "US" else "VND"
+    price_str = f"{curr_price:,.2f} {currency_label}" if curr_price > 0 else "Not Available"
 
     # 2. Call Gemini 1.5 Pro for Synthesis (Deep Reasoning)
     try:
         # Use pro model for final summary & recommendation
         adapter = GeminiAdapter(model_name=Config.LLM_MODEL_NAME_PRO)
         
+        current_date_str = datetime.now().strftime("%B %d, %Y")
+        mode = state.get("analysis_mode", "full")
+        mode_label = "Comprehensive Synthesis" if mode == "full" else mode.capitalize()
         prompt = SYNTHESIS_PROMPT_TEMPLATE.format(
             ticker=ticker,
+            current_date=current_date_str,
             current_price=price_str,
+            analysis_mode=mode_label,
             fundamental_insights=fund_insights,
             technical_insights=tech_insights,
             sentiment_insights=sent_insights
@@ -73,7 +81,7 @@ def synthesis_node(state: AgentState) -> Dict[str, Any]:
             logs.append(f"[Synthesis Node] Recommendation tag not matched. Defaulting from content scanning to: {recommendation.value}")
 
         # 4. Save report in SQLite analysis_history
-        save_analysis_report(ticker, mode, recommendation.value, report_markdown)
+        save_analysis_report(ticker, mode, recommendation.value, report_markdown, market=market)
         logs.append("[Synthesis Node] Analysis report saved to history database.")
         
         return {

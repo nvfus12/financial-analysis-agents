@@ -88,6 +88,7 @@ You are the Chief Investment Officer (CIO). Your role is to synthesize the repor
 
 SYNTHESIS_PROMPT_TEMPLATE = """
 Stock Ticker: {ticker}
+Current Date: {current_date}
 Current Market Price: {current_price}
 
 --- FUNDAMENTAL ANALYSIS INSIGHTS ---
@@ -107,6 +108,15 @@ As Chief Investment Officer, perform a final synthesis:
 
 Compile this into a beautiful Markdown report. The report must contain:
 - A prominent title: "INVESTMENT ANALYSIS REPORT: {ticker}"
-- A metadata card (Date, Price, Mode, Recommendation)
+- A metadata section formatted EXACTLY like this (make sure to include the blank lines between them):
+
+**Date**: {current_date}
+
+**Current Price**: {current_price}
+
+**Analysis Mode**: {analysis_mode}
+
+**Final Recommendation**: [BUY/SELL/HOLD]
+
 - Sections for: Executive Summary, Fundamental Analysis, Technical Analysis, Sentiment Analysis, and Final Recommendation & Risks.
 """

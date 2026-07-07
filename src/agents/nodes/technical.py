@@ -6,6 +6,7 @@ from src.domain.models.state import AgentState
 from src.domain.services.financial_calc import calculate_rsi, calculate_macd
 from src.infrastructure.database.cache_repo import get_cached_stock_data, save_stock_data_cache
 from src.infrastructure.adapters.vnstock_adapter import VnStockAdapter
+from src.infrastructure.adapters.yfinance_adapter import YFinanceAdapter
 from src.infrastructure.adapters.gemini_adapter import GeminiAdapter
 from src.infrastructure.config import Config
 from src.agents.prompts import TECHNICAL_SYSTEM_INSTRUCTION, TECHNICAL_PROMPT_TEMPLATE
@@ -19,9 +20,10 @@ def technical_node(state: AgentState) -> Dict[str, Any]:
     and evaluates price action trends using Gemini LLM.
     """
     ticker = state.get("ticker", "").strip().upper()
+    market = state.get("market", "VN").strip().upper()
     logs = state.get("logs", [])
     
-    logs.append(f"[Technical Node] Starting technical analysis for {ticker}.")
+    logs.append(f"[Technical Node] Starting technical analysis for {ticker} (Market: {market}).")
     
     # 1. Fetch Price History (check database cache first)
     prices_raw = get_cached_stock_data(ticker, "prices")
@@ -40,9 +42,13 @@ def technical_node(state: AgentState) -> Dict[str, Any]:
             df = None
 
     if df is None or df.empty:
-        logs.append(f"[Technical Node] Cache miss for {ticker} prices. Fetching from vnstock...")
-        vn_client = VnStockAdapter()
-        df = vn_client.get_historical_prices(ticker, days=365)
+        logs.append(f"[Technical Node] Cache miss for {ticker} prices. Fetching data from provider...")
+        if market == "US":
+            client = YFinanceAdapter()
+        else:
+            client = VnStockAdapter()
+            
+        df = client.get_historical_prices(ticker, days=365)
         
         if not df.empty:
             # Convert DataFrame to JSON serializable dict for caching
@@ -93,10 +99,11 @@ def technical_node(state: AgentState) -> Dict[str, Any]:
                     else "Oversold (<30)" if curr_rsi < 30 \
                     else "Neutral (30-70)"
                     
+        currency_label = "USD" if market == "US" else "VND"
         technical_stats = (
-            f"- Current Close Price: {curr_price:,.2f} VND\n"
-            f"- 20-day Simple Moving Average (MA20): {curr_ma20:,.2f} VND\n"
-            f"- 50-day Simple Moving Average (MA50): {curr_ma50:,.2f} VND\n"
+            f"- Current Close Price: {curr_price:,.2f} {currency_label}\n"
+            f"- 20-day Simple Moving Average (MA20): {curr_ma20:,.2f} {currency_label}\n"
+            f"- 50-day Simple Moving Average (MA50): {curr_ma50:,.2f} {currency_label}\n"
             f"- Moving Average Trend: {ma_trend}\n"
             f"- Relative Strength Index (RSI 14): {curr_rsi:.2f} ({rsi_state})\n"
             f"- MACD Line: {curr_macd_line:.2f}, Signal Line: {curr_macd_sig:.2f}, Hist: {curr_macd_hist:.2f}\n"

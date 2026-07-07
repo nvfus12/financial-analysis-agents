@@ -38,6 +38,7 @@ def run_migrations():
         CREATE TABLE IF NOT EXISTS analysis_history (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
             ticker          TEXT NOT NULL,
+            market          TEXT DEFAULT 'VN',  -- 'VN' | 'US'
             analysis_mode   TEXT NOT NULL,     -- 'full' | 'technical' | 'fundamental'
             recommendation  TEXT NOT NULL,     -- 'BUY' | 'SELL' | 'HOLD'
             report_markdown TEXT NOT NULL,
@@ -51,6 +52,14 @@ def run_migrations():
         cursor = conn.cursor()
         for ddl in ddl_statements:
             cursor.execute(ddl)
+        
+        # Run column migration for existing tables (ignore if column already exists)
+        try:
+            cursor.execute("ALTER TABLE analysis_history ADD COLUMN market TEXT DEFAULT 'VN';")
+            logger.info("Migrated analysis_history table: added 'market' column.")
+        except Exception:
+            pass
+            
         conn.commit()
         logger.info("SQLite migrations completed successfully.")
     except Exception as e:

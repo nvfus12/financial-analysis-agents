@@ -89,7 +89,7 @@ def test_analysis_history():
     ticker = "TEST_HIST"
     markdown = "# Financial analysis report of TEST_HIST"
     
-    save_analysis_report(ticker, "full", "BUY", markdown)
+    save_analysis_report(ticker, "full", "BUY", markdown, market="US")
     
     # Check history list
     history = get_analysis_history(limit=5)
@@ -98,12 +98,14 @@ def test_analysis_history():
     latest = history[0]
     assert latest["ticker"] == ticker
     assert latest["recommendation"] == "BUY"
+    assert latest["market"] == "US"
     
     # Check full report by ID
     report = get_analysis_report_by_id(latest["id"])
     assert report is not None
     assert report["report_markdown"] == markdown
     assert report["analysis_mode"] == "full"
+    assert report["market"] == "US"
 
     # Test Deletion
     del_success = delete_analysis_report(latest["id"])

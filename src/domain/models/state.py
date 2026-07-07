@@ -7,6 +7,7 @@ class AgentState(TypedDict):
     final reports, and the execution trace logs.
     """
     ticker: str
+    market: str                   # 'VN' | 'US'
     pdf_path: str                 # Local path to uploaded PDF report (optional)
     analysis_mode: str            # 'full' | 'technical' | 'fundamental'
     report_language: str          # 'en' | 'vi'

@@ -5,6 +5,7 @@ from typing import Dict, Any
 from src.domain.models.state import AgentState
 from src.infrastructure.database.cache_repo import get_cached_stock_data, save_stock_data_cache
 from src.infrastructure.adapters.vnstock_adapter import VnStockAdapter
+from src.infrastructure.adapters.yfinance_adapter import YFinanceAdapter
 from src.infrastructure.adapters.llamaparse_adapter import LlamaParseAdapter
 from src.infrastructure.adapters.chromadb_adapter import ChromaDBAdapter
 from src.infrastructure.adapters.gemini_adapter import GeminiAdapter
@@ -21,17 +22,22 @@ def fundamental_node(state: AgentState) -> Dict[str, Any]:
     and analyzes financial health via Gemini LLM.
     """
     ticker = state.get("ticker", "").strip().upper()
+    market = state.get("market", "VN").strip().upper()
     pdf_path = state.get("pdf_path", "")
     logs = state.get("logs", [])
     
-    logs.append(f"[Fundamental Node] Starting fundamental analysis for {ticker}.")
+    logs.append(f"[Fundamental Node] Starting fundamental analysis for {ticker} (Market: {market}).")
     
     # 1. Fetch Financial Ratios (check database cache first)
     ratios = get_cached_stock_data(ticker, "ratios")
     if not ratios:
-        logs.append(f"[Fundamental Node] Cache miss for {ticker} ratios. Fetching from vnstock...")
-        vn_client = VnStockAdapter()
-        ratios = vn_client.get_financial_ratios(ticker)
+        logs.append(f"[Fundamental Node] Cache miss for {ticker} ratios. Fetching data from provider...")
+        if market == "US":
+            client = YFinanceAdapter()
+        else:
+            client = VnStockAdapter()
+            
+        ratios = client.get_financial_ratios(ticker)
         if ratios:
             save_stock_data_cache(ticker, "ratios", ratios)
             logs.append(f"[Fundamental Node] Ratios fetched and cached.")

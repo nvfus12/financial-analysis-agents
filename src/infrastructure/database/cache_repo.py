@@ -147,7 +147,7 @@ def save_news_cache(ticker: str, articles: List[Dict[str, Any]]):
 
 # --- Analysis History operations ---
 
-def save_analysis_report(ticker: str, mode: str, recommendation: str, markdown: str):
+def save_analysis_report(ticker: str, mode: str, recommendation: str, markdown: str, market: str = "VN"):
     """
     Persists a generated analysis report to the history table.
     """
@@ -156,13 +156,13 @@ def save_analysis_report(ticker: str, mode: str, recommendation: str, markdown: 
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO analysis_history (ticker, analysis_mode, recommendation, report_markdown)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO analysis_history (ticker, market, analysis_mode, recommendation, report_markdown)
+            VALUES (?, ?, ?, ?, ?)
             """,
-            (ticker.upper(), mode.lower(), recommendation.upper(), markdown)
+            (ticker.upper(), market.upper(), mode.lower(), recommendation.upper(), markdown)
         )
         conn.commit()
-        logger.debug(f"Analysis report saved to history for {ticker}.")
+        logger.debug(f"Analysis report saved to history for {ticker} (Market: {market}).")
     except Exception as e:
         logger.error(f"Error saving analysis report for {ticker}: {e}")
     finally:
@@ -177,7 +177,7 @@ def get_analysis_history(limit: int = 15) -> List[Dict[str, Any]]:
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT id, ticker, analysis_mode, recommendation, created_at
+            SELECT id, ticker, market, analysis_mode, recommendation, created_at
             FROM analysis_history
             ORDER BY id DESC
             LIMIT ?
@@ -201,7 +201,7 @@ def get_analysis_report_by_id(report_id: int) -> Optional[Dict[str, Any]]:
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT id, ticker, analysis_mode, recommendation, report_markdown, created_at
+            SELECT id, ticker, market, analysis_mode, recommendation, report_markdown, created_at
             FROM analysis_history
             WHERE id = ?
             """,

@@ -201,17 +201,18 @@ TRANSLATIONS = {
         "kpi_last_rec": "KHUYẾN NGHỊ GẦN NHẤT",
         "kpi_last_date": "NGÀY PHÂN TÍCH GẦN NHẤT",
         "recent_reports": "GẦN ĐÂY",
+        "market_label": "Thị trường",
+        "market_help": "Chọn sàn giao dịch chứng khoán (Việt Nam hoặc Mỹ).",
         "ticker_label": "Mã Cổ phiếu",
-        "ticker_help": "Ví dụ: FPT, VNM, HPG (Sàn HOSE)",
+        "ticker_help": "Ví dụ: FPT, HPG (Việt Nam) hoặc AAPL, TSLA, NVDA (Mỹ)",
         "mode_label": "Chế độ Phân tích",
         "mode_help": "'full' chạy tất cả các agent, 'fundamental' chạy tỷ số + PDF RAG, 'technical' đánh giá xu hướng kỹ thuật.",
         "pdf_label": "Tải lên Báo cáo tài chính (PDF)",
         "pdf_help": "Yêu cầu cho chế độ RAG phân tích cơ bản.",
         "run_btn": "🚀 Chạy Phân tích Multi-Agent",
         "tab_synthesis": "📋 Báo cáo Tổng hợp (CIO)",
-        "tab_technical": "🕵️ Phân tích Kỹ thuật",
-        "tab_fundamental": "🔍 Phân tích Cơ bản",
-        "tab_sentiment": "📰 Cảm xúc Thị trường",
+        "tab_analysts": "🕵️ Báo cáo Chi tiết",
+        "tab_charts": "📈 Biểu đồ Kỹ thuật",
         "tab_logs": "⚙️ Nhật ký thực thi",
         "trace_header": "🔍 Nhật ký thực thi Agent",
         "no_report_msg": "Chưa có báo cáo nào được tạo. Điền mã cổ phiếu và bấm nút chạy ở trên hoặc chọn báo cáo cũ trong lịch sử.",
@@ -231,7 +232,7 @@ TRANSLATIONS = {
         "spinner_msg": "Agent Orchestrator đang lập kế hoạch phân tích cho",
         "result_header": "Kết quả phân tích cho",
         "history_loaded_trace": "Đã tải báo cáo đã lưu từ {created_at}",
-        "error_no_ticker": "❌ Vui lòng nhập mã cổ phiếu hợp lệ (ví dụ: FPT).",
+        "error_no_ticker": "❌ Vui lòng nhập mã cổ phiếu hợp lệ (ví dụ: FPT hoặc AAPL).",
         "error_no_gemini": "❌ Khóa API Google Gemini bị thiếu! Vui lòng cấu hình trong tệp .env của bạn.",
         "error_no_9router": "❌ Khóa API 9router bị thiếu! Vui lòng cấu hình trong tệp .env của bạn."
     },
@@ -243,17 +244,18 @@ TRANSLATIONS = {
         "kpi_last_rec": "LAST RECOMMENDATION",
         "kpi_last_date": "LAST ANALYSIS DATE",
         "recent_reports": "RECENT REPORTS",
+        "market_label": "Market",
+        "market_help": "Select the stock exchange market (Vietnam or United States).",
         "ticker_label": "Stock Ticker Symbol",
-        "ticker_help": "E.g. FPT, VNM, HPG (HOSE Market tickers)",
+        "ticker_help": "E.g. FPT, HPG (Vietnam) or AAPL, TSLA, NVDA (United States)",
         "mode_label": "Analysis Mode",
         "mode_help": "'full' schedules all agents, 'fundamental' runs ratios + PDF RAG, 'technical' evaluates price indicators.",
         "pdf_label": "Upload Financial Report (PDF)",
         "pdf_help": "Required for PDF RAG semantic analysis under fundamental mode.",
         "run_btn": "🚀 Run Multi-Agent Analysis",
         "tab_synthesis": "📋 CIO Synthesis Memo",
-        "tab_technical": "🕵️ Specialist Deep-Dives",
-        "tab_fundamental": "🔍 Fundamental Analyst",
-        "tab_sentiment": "📰 Market Sentiment",
+        "tab_analysts": "🕵️ Specialist Deep-Dives",
+        "tab_charts": "📈 Technical Charting",
         "tab_logs": "⚙️ Agent Execution Log",
         "trace_header": "🔍 Agent Conversation Trace Logs",
         "no_report_msg": "No reports generated yet. Enter stock ticker and click run above, or select a previous report from history.",
@@ -296,6 +298,8 @@ if "current_report_id" not in st.session_state:
     st.session_state.current_report_id = None
 if "current_ticker" not in st.session_state:
     st.session_state.current_ticker = None
+if "current_market" not in st.session_state:
+    st.session_state.current_market = "VN"
 if "current_rec" not in st.session_state:
     st.session_state.current_rec = None
 if "sub_insights" not in st.session_state:
@@ -353,6 +357,7 @@ with st.sidebar:
                         st.session_state.current_report = full_record["report_markdown"]
                         st.session_state.current_report_id = full_record["id"]
                         st.session_state.current_ticker = full_record["ticker"]
+                        st.session_state.current_market = full_record.get("market", "VN")
                         st.session_state.current_rec = full_record["recommendation"]
                         st.session_state.sub_insights = {
                             "fundamental": "Historical run details embedded in Synthesis report tab." if st.session_state.ui_lang == "en" else "Chi tiết lịch sử được đính kèm ở tab Báo cáo Tổng hợp.",
@@ -371,6 +376,7 @@ with st.sidebar:
                         if st.session_state.get("current_report_id") == item["id"]:
                             st.session_state.current_report = None
                             st.session_state.current_ticker = None
+                            st.session_state.current_market = "VN"
                             st.session_state.current_rec = None
                             st.session_state.current_report_id = None
                             st.session_state.trace_logs = []
@@ -439,8 +445,16 @@ with m_col4:
 # Main Form Container (Input Controls)
 with st.container():
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 1, 2])
+    col0, col1, col2, col3 = st.columns([1, 1, 1, 2])
     
+    with col0:
+        market_input = st.selectbox(
+            t("market_label"),
+            options=["VN", "US"],
+            index=0,
+            help=t("market_help")
+        )
+        
     with col1:
         ticker_input = st.text_input(
             t("ticker_label"),
@@ -520,6 +534,7 @@ if run_clicked:
                 config = {"configurable": {"thread_id": str(uuid.uuid4())}}
                 initial_state = {
                     "ticker": ticker_input,
+                    "market": market_input,
                     "analysis_mode": mode_input,
                     "pdf_path": pdf_temp_path,
                     "logs": [f"Session initialized at {datetime.now().strftime('%H:%M:%S')}."],
@@ -535,6 +550,7 @@ if run_clicked:
                 # Save results in session state
                 st.session_state.current_report = final_state.get("final_report_markdown", "")
                 st.session_state.current_ticker = final_state.get("ticker", ticker_input)
+                st.session_state.current_market = final_state.get("market", market_input)
                 st.session_state.current_rec = final_state.get("final_recommendation", "HOLD")
                 
                 # Dynamic fetch of the latest report ID from DB
@@ -577,8 +593,8 @@ if st.session_state.current_report:
     # 2. Main Dashboard Tabs
     tab_report, tab_analysts, tab_charts, tab_logs = st.tabs([
         t("tab_synthesis"),
-        t("tab_technical"),
-        t("tab_fundamental"),
+        t("tab_analysts"),
+        t("tab_charts"),
         t("tab_logs")
     ])
     
@@ -610,7 +626,7 @@ if st.session_state.current_report:
             price_df.sort_index(inplace=True)
             
             # Generate and draw chart
-            plotly_fig = create_financial_chart(price_df)
+            plotly_fig = create_financial_chart(price_df, market=st.session_state.current_market)
             st.plotly_chart(plotly_fig, use_container_width=True)
         else:
             st.warning(t("chart_warn"))
