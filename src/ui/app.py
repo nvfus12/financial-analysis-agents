@@ -1,6 +1,13 @@
+import sys
 import os
 import uuid
 import logging
+
+# Ensure project root is in sys.path
+root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -314,6 +321,11 @@ if "trace_logs" not in st.session_state:
 # ------------------------------------------------------------------------------
 # Sidebar Configuration & Historical Reports Panel
 # ------------------------------------------------------------------------------
+# Helper function to cache REST API history queries and avoid UI lag on re-runs
+@st.cache_data(ttl=3)
+def cached_get_history(limit: int = 15):
+    return get_history_api(limit=limit)
+
 with st.sidebar:
     st.markdown('<div class="sidebar-header">📈 FinAnalyst Agent</div>', unsafe_allow_html=True)
     st.markdown("---")
@@ -340,7 +352,7 @@ with st.sidebar:
     recent_label = t("recent_reports")
     st.markdown(f'<div style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 0.8rem; letter-spacing: 0.5px;">{recent_label}</div>', unsafe_allow_html=True)
     
-    # Fetch previous analysis runs from DB
+    # Fetch previous analysis runs directly from DB
     history_items = get_analysis_history(limit=10)
     
     if history_items:

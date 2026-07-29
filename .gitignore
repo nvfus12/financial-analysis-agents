@@ -72,3 +72,8 @@ data/
 .agents/sdd/
 .agents/progress_ledger.md
 *.diff
+
+# Ignore Interview directory
+Interview/
+interview/
+Interview

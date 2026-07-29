@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinAnalyst AI - Phân Tích Cổ Phiếu Thông Minh</title>
+    <!-- Google Fonts (Full Vietnamese Support) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Marked.js & Plotly.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/style.css?v=2.0.4">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-chart-line brand-icon"></i>
+                <h2>FinAnalyst AI</h2>
+            </div>
+            
+            <div class="sidebar-section">
+                <label id="lblUiLang" class="section-label">NGÔN NGỮ GIAO DIỆN</label>
+                <select id="uiLangSelect" class="styled-select">
+                    <option value="vi">Tiếng Việt 🇻🇳</option>
+                    <option value="en">English 🇺🇸</option>
+                </select>
+            </div>
+
+            <div class="sidebar-section">
+                <label id="lblReportLang" class="section-label">NGÔN NGỮ BÁO CÁO</label>
+                <select id="reportLangSelect" class="styled-select">
+                    <option value="vi">Tiếng Việt 🇻🇳</option>
+                    <option value="en">English 🇺🇸</option>
+                </select>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <div class="sidebar-section">
+                <label id="lblHistory" class="section-label">LỊCH SỬ PHÂN TÍCH</label>
+                <div id="historyList" class="history-list">
+                    <div class="history-loading"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header Banner -->
+            <header class="app-header">
+                <h1>Phân Tích Cổ Phiếu Thông Minh Bằng AI</h1>
+                <p class="subtitle">Trợ lý AI tự động tổng hợp số liệu tài chính, biểu đồ kỹ thuật và tin tức thị trường giúp bạn đưa ra quyết định đầu tư hiệu quả.</p>
+            </header>
+
+            <!-- KPI Cards Dashboard -->
+            <section class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-title">TỔNG SỐ BÁO CÁO</div>
+                    <div class="kpi-value" id="kpiTotal">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">MÃ PHÂN TÍCH GẦN NHẤT</div>
+                    <div class="kpi-value text-blue" id="kpiLastTicker">N/A</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">KHUYẾN NGHỊ GẦN NHẤT</div>
+                    <div class="kpi-value" id="kpiLastRec">N/A</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">NGÀY CHẠY GẦN NHẤT</div>
+                    <div class="kpi-value text-green" id="kpiLastDate">N/A</div>
+                </div>
+            </section>
+
+            <!-- Input Control Panel -->
+            <section class="form-card">
+                <form id="analysisForm" class="form-grid">
+                    <div class="form-group">
+                        <label for="marketSelect" id="lblMarket"><i class="fa-solid fa-globe"></i> Thị trường</label>
+                        <select id="marketSelect" name="market" class="form-control">
+                            <option value="VN" id="optVn">Việt Nam (VNINDEX)</option>
+                            <option value="US" id="optUs">Mỹ (NASDAQ / NYSE)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tickerInput" id="lblTicker"><i class="fa-solid fa-dollar-sign"></i> Mã Cổ phiếu</label>
+                        <input type="text" id="tickerInput" name="ticker" class="form-control" placeholder="VD: FPT, HPG, AAPL" required maxlength="5">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modeSelect" id="lblMode"><i class="fa-solid fa-sliders"></i> Chế độ Phân tích</label>
+                        <select id="modeSelect" name="analysis_mode" class="form-control">
+                            <option value="full" id="optModeFull">Phân tích Toàn diện</option>
+                            <option value="fundamental" id="optModeFund">Phân tích Báo cáo Tài chính</option>
+                            <option value="technical" id="optModeTech">Phân tích Biểu đồ & Xu hướng</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pdfUpload" id="lblPdf"><i class="fa-solid fa-file-pdf"></i> Tải BCTC (PDF)</label>
+                        <input type="file" id="pdfUpload" name="pdf_file" class="form-control-file" accept=".pdf">
+                    </div>
+
+                    <div class="form-group btn-container">
+                        <button type="submit" id="btnSubmit" class="btn-primary">
+                            <i class="fa-solid fa-rocket"></i> Chạy Phân Tích
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Alert Message Box -->
+            <div id="alertBox" class="alert-card hidden"></div>
+
+            <!-- Loading Spinner Overlay -->
+            <div id="loadingOverlay" class="loading-card hidden">
+                <i class="fa-solid fa-spinner fa-spin loading-icon"></i>
+                <h3 id="loadingText">Đang phân tích cổ phiếu...</h3>
+                <p id="loadingSub">Đang thu thập dữ liệu tài chính, biểu đồ và tin tức mới nhất...</p>
+            </div>
+
+            <!-- Analysis Output Tabs Panel -->
+            <section id="resultsSection" class="results-card hidden">
+                <div class="results-header">
+                    <h2><span id="hdrResultPrefix">Kết quả phân tích cho </span><span id="resultTicker">---</span></h2>
+                    <div id="resultBadge" class="rec-badge badge-hold">HOLD</div>
+                </div>
+
+                <!-- Plotly Candlestick Chart Container -->
+                <div id="chartContainer" class="chart-box hidden" style="margin-bottom: 1rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); padding: 0.5rem; background: rgba(15, 23, 42, 0.6);">
+                    <div id="stockPlotlyChart" style="width:100%; height:380px;"></div>
+                </div>
+
+                <!-- Tab Navigation Bar -->
+                <div class="tab-bar">
+                    <button class="tab-btn active" id="btnTabSynthesis" data-tab="tabSynthesis"><i class="fa-solid fa-file-contract"></i> Báo cáo Tổng hợp</button>
+                    <button class="tab-btn" id="btnTabDeepDive" data-tab="tabDeepDive"><i class="fa-solid fa-layer-group"></i> Phân tích Chi tiết</button>
+                    <button class="tab-btn" id="btnTabLogs" data-tab="tabLogs"><i class="fa-solid fa-clock-rotate-left"></i> Nhật ký Xử lý</button>
+                </div>
+
+                <!-- Tab 1: Synthesis Memo -->
+                <div id="tabSynthesis" class="tab-content active">
+                    <div id="reportMarkdownContent" class="markdown-body"></div>
+                </div>
+
+                <!-- Tab 2: Specialist Deep Dives -->
+                <div id="tabDeepDive" class="tab-content hidden">
+                    <div class="accordion-item">
+                        <div class="accordion-header" id="hdrFund"><i class="fa-solid fa-chart-pie"></i> Phân tích Tài chính & Báo cáo</div>
+                        <div id="fundamentalInsight" class="accordion-body markdown-body"></div>
+                    </div>
+                    <div class="accordion-item">
+                        <div class="accordion-header" id="hdrTech"><i class="fa-solid fa-chart-line"></i> Phân tích Biểu đồ Kỹ thuật</div>
+                        <div id="technicalInsight" class="accordion-body markdown-body"></div>
+                    </div>
+                    <div class="accordion-item">
+                        <div class="accordion-header" id="hdrSent"><i class="fa-solid fa-newspaper"></i> Phân tích Tin tức & Thị trường</div>
+                        <div id="sentimentInsight" class="accordion-body markdown-body"></div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Execution Logs -->
+                <div id="tabLogs" class="tab-content hidden">
+                    <div id="logsConsole" class="console-box"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Custom JS (Cache Busted & Continuous Candlesticks) -->
+    <script src="/static/app.js?v=2.1.2"></script>
+</body>
+</html>

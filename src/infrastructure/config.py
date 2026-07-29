@@ -23,8 +23,8 @@ class Config:
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     
     # Model Configurations
-    LLM_MODEL_NAME_FLASH = os.getenv("LLM_MODEL_NAME_FLASH", "gemini-2.0-flash")
-    LLM_MODEL_NAME_PRO = os.getenv("LLM_MODEL_NAME_PRO", "gemini-2.5-pro")
+    LLM_MODEL_NAME_FLASH = os.getenv("LLM_MODEL_NAME_FLASH", "gemini-3.1-flash")
+    LLM_MODEL_NAME_PRO = os.getenv("LLM_MODEL_NAME_PRO", "gemini-3.1-flash")
     LLM_MODEL_NAME_EMBEDDING = os.getenv("LLM_MODEL_NAME_EMBEDDING", "models/gemini-embedding-2")
     
     @classmethod

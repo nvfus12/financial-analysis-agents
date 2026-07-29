@@ -1,154 +1,176 @@
-# FinAnalyst: Hierarchical Multi-Agent Financial Research & Stock Analysis System
+# FinAnalyst AI - Multi-Agent Stock Research System
 
-[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
-[![Framework](https://img.shields.io/badge/framework-LangGraph-orange.svg)](https://github.com/langchain-ai/langgraph)
-[![Build Status](https://img.shields.io/badge/tests-passed-success.svg)](tests/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Framework](https://img.shields.io/badge/Framework-FastAPI%20%7C%20LangGraph-green.svg)](https://fastapi.tiangolo.com/)
+[![LLM Engine](https://img.shields.io/badge/LLM-Gemini%203.1%20Flash-purple.svg)](https://ai.google.dev/)
+[![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 
-FinAnalyst is a production-grade, hierarchical multi-agent workspace designed to perform automated financial research, technical charting, and market sentiment analysis for stocks. Built on top of **LangGraph**, the system orchestrates multiple specialized AI agents under a Chief Investment Officer (CIO) node to deliver institutional-grade research memos and investment recommendations (BUY/SELL/HOLD).
-
-This project features a clean **Hexagonal Architecture (Ports & Adapters)**, advanced API rate-limit resilience, bilingual localization, and a comprehensive local caching layer to ensure speed, scalability, and cost efficiency.
+**FinAnalyst AI** là hệ thống trợ lý phân tích đầu tư và cổ phiếu thông minh đa đại lý (Multi-Agent System) được xây dựng trên nền tảng **FastAPI**, **LangGraph V2**, và mô hình ngôn ngữ thế hệ mới **Gemini 3.1 Flash**. Hệ thống phối hợp tự động giữa các Agent chuyên môn (Phân tích Cơ bản, Phân tích Kỹ thuật, Cảm xúc Thị trường) kết hợp bộ tự kiểm duyệt phản biện (Smart Reflection) để đưa ra báo cáo khuyến nghị đầu tư chuẩn xác.
 
 ---
 
-## 🤖 Multi-Agent Graph Architecture
+## 🌟 Tính Năng Nổi Bật (Key Features)
 
-The workflow is modeled as a state machine using LangGraph, coordinating the following specialized nodes:
+### 1. 🛡️ Bộ Kiểm Soát Pre-flight Validation (`ValidationService`)
+- **Xác thực Mã Cổ phiếu Real-time**: Kiểm tra định dạng Regex (`3-5` ký tự) và **xác thực sự tồn tại thực tế trên thị trường** chứng khoán Việt Nam (VNINDEX) hoặc Mỹ (NASDAQ/NYSE) qua Yahoo Finance trước khi gọi LLM.
+- **Xác thực File BCTC (PDF)**:
+  - Kiểm tra Magic Bytes (`%PDF-`) chống giả mạo định dạng.
+  - Giới hạn dung lượng tệp (`<= 30MB`).
+  - Phát hiện tệp bị đặt mật khẩu bảo vệ hoặc bị hỏng dữ liệu.
+  - Quét mật độ từ khóa tài chính chuyên ngành (*Báo cáo tài chính, Balance sheet, Revenue, Doanh thu...*).
 
-```mermaid
-graph TD
-    Start([User Request]) --> Orchestrator{Orchestrator Node}
-    
-    Orchestrator -->|Plan & Schedule| Fundamental[Fundamental Analyst Node]
-    Orchestrator -->|Plan & Schedule| Technical[Technical Analyst Node]
-    Orchestrator -->|Plan & Schedule| Sentiment[Sentiment Analyst Node]
-    
-    Fundamental --> Synthesis[Synthesis CIO Node]
-    Technical --> Synthesis
-    Sentiment --> Synthesis
-    
-    Synthesis --> DB[(SQLite History DB)]
-    Synthesis --> End([Institutional Markdown Memo])
-```
+### 2. 🤖 Kiến Trúc Multi-Agent Phân Cấp (LangGraph V2)
+- **Deterministic Control Node (Router)**: Điều phối luồng phân tích theo chế độ được yêu cầu (`full`, `fundamental`, `technical`).
+- **Fundamental Analyst Agent**: Phân tích các chỉ số tài chính live (P/E, P/B, ROE, D/E...) kết hợp RAG trích xuất văn bản BCTC từ file PDF.
+- **Technical Analyst Agent**: Tính toán các chỉ báo kỹ thuật (RSI-14, MACD, MA20, MA50) và mô hình giá.
+- **Market Sentiment Agent**: Cào tin tức mới nhất từ các trang báo tài chính (CafeF, Vietstock) và chấm điểm cảm xúc thị trường (-1.0 đến 1.0).
+- **CIO Synthesis Agent**: Tổng hợp báo cáo khuyến nghị đầu tư cuối cùng (`BUY`, `SELL`, `HOLD`).
+- **Smart Auditor Node (Reflection Loop)**: Tự động phản biện chất lượng báo cáo. Nếu phát hiện sai sót hoặc thiếu căn cứ, Auditor yêu cầu Agent làm lại draft (tối đa 2 vòng phản biện).
 
-1.  **Orchestrator Agent**: Parses the user request, validates the ticker symbol, and schedules the execution of specialist agents based on the selected mode (`full`, `fundamental`, or `technical`).
-2.  **Fundamental Specialist (PDF RAG)**: 
-    *   Fetches stock metrics (P/E, ROE, P/B, EPS) dynamically. Uses `VnStockAdapter` for Vietnam and `YFinanceAdapter` for US stocks.
-    *   Ingests uploaded quarterly/annual PDF reports, parses them (using PyPDF/LlamaParse), indexes them into a local persistent **ChromaDB** vector store, and runs a semantic search RAG pipeline to extract key balance-sheet details.
-3.  **Technical Specialist**: Computes moving averages (MA20, MA50), RSI, and MACD indicators on price history, generating trend signals (resolving in `VND` or `USD` depending on market).
-4.  **Sentiment Specialist**: Scrapes CafeF news headlines for VN stocks, scrapes Yahoo Finance news for US stocks, runs sentiment scoring via a local **FinBERT** pipeline, and compiles market confidence metrics.
-5.  **Synthesis CIO Agent**: Reviews specialist insights, resolves conflicting signals, makes the final recommendation (BUY, SELL, or HOLD), compiles the markdown memo, and persists it into the SQLite history database with market attributes.
+### 3. 🖥️ Giao Diện Web Tách Biệt mượt mà (HTML5 + CSS3 + Vanilla JS)
+- Giao diện **Slate Dark Mode Glassmorphism** hiện đại.
+- **0ms Client-side Latency**: Chuyển đổi giữa các tab báo cáo tức thì không đơ mờ màn hình.
+- **Biểu đồ Nến Nhật Tương tác (Plotly.js)**: Hiển thị 90 phiên giá liên tục không bị khoảng thưa cuối tuần.
+- **Đa ngôn ngữ Linh hoạt**: Hỗ trợ chuyển đổi ngôn ngữ giao diện (UI) và ngôn ngữ báo cáo (Tiếng Việt 🇻🇳 / Tiếng Anh 🇺🇸).
 
----
-
-## 🌟 Key Technical Features
-
-### 1. Hexagonal Architecture (Ports & Adapters)
-Core domain models and interfaces (Ports) are strictly decoupled from infrastructure details (Adapters). This ensures that database layers, LLM providers, and charting libraries can be swapped out seamlessly without affecting core business logic.
-
-### 2. Multi-Key Load Balancing & Fallback Resilience
-Designed for API key quota limitations:
-- **Random Load Balancing**: Sequence shuffles user native Gemini API keys to distribute quota.
-- **Automated Fallback**: Intercepts `429 (Rate Limit)` or quota errors and sequentially retries using the next available key.
-- **Provider Redundancy**: Supports native Google AI Studio client fallback to OpenAI-compatible `9router` proxy endpoints.
-
-### 3. Local SQLite Caching & Performance Tuning
-To avoid redundant web scraping and API costs, local SQLite cache repository tables handle:
-- **Stock Prices & Ratios Cache** (4-hour expiration TTL) for both VN (vnstock) and US (yfinance) markets.
-- **Scraped News Cache** (24-hour expiration TTL) covering CafeF and Yahoo Finance.
-- **Conversational State Checkpointing** (via LangGraph SQLiteSaver)
-- **Automatic Migration Schema Hooks**: Seamlessly alters history tables to inject the `market` attribute, preserving backwards compatibility.
-
-### 4. Premium SaaS UI Dashboard
-- **Glassmorphic Slate Design**: Beautiful dark UI built using Streamlit with custom CSS.
-- **Bilingual Interface**: Toggle both UI text and LLM generated reports between **Tiếng Việt** and **English**.
-- **Interactive Multi-Market Selector**: Added a "Market" selection dropdown next to the ticker symbol.
-- **Interactive Plotly Charts**: Visualizes candlesticks, moving averages, RSI bands, and MACD histograms, adapting the price axes label dynamically (e.g. `Price (USD)` or `Price (VND)`).
-- **Gemini-Style Sidebar**: A clean list of clickable recent chat links with inline deletion buttons and red-hover styles.
+### 4. 🗄️ Tầng Lưu Trữ & Bộ Nhớ Tạm (SQLite Cache)
+- Cache dữ liệu giá và tin tức để tối ưu thời gian phản hồi và tiết kiệm Token API.
+- Lưu trữ lịch sử tất cả các báo cáo phân tích phục vụ xem lại hoặc quản lý.
 
 ---
 
-## 📂 Project Structure
+## 🏗️ Kiến Trúc Hệ Thống (System Architecture)
 
 ```
-├── .agents/                 # Behavioral guidelines and coding rules
-├── data/                    # SQLite databases (gitignored) and PDF uploads
+                     ┌──────────────────────────────┐
+                     │    HTML5 / JS Web Client     │
+                     └──────────────┬───────────────┘
+                                    │ HTTP / REST API
+                     ┌──────────────▼───────────────┐
+                     │   FastAPI Engine (main.py)   │
+                     └──────────────┬───────────────┘
+                                    │ Pre-flight Check
+                     ┌──────────────▼───────────────┐
+                     │      ValidationService       │
+                     └──────────────┬───────────────┘
+                                    │ Verified Request
+                     ┌──────────────▼───────────────┐
+                     │     LangGraph Orchestrator   │
+                     └──────┬───────┬───────┬───────┘
+                            │       │       │
+       ┌────────────────────┘       │       └────────────────────┐
+       ▼                            ▼                            ▼
+┌──────────────┐            ┌──────────────┐            ┌──────────────┐
+│ Fundamental  │            │  Technical   │            │  Sentiment   │
+│   Analyst    │            │   Analyst    │            │   Analyst    │
+└──────┬───────┘            └──────┬───────┘            └──────┬───────┘
+       │                            │                            │
+       └────────────────────┐       │       ┌────────────────────┘
+                            ▼       ▼       ▼
+                     ┌──────────────────────────────┐
+                     │     CIO Synthesis Agent      │
+                     └──────────────┬───────────────┘
+                                    │ Review Draft
+                     ┌──────────────▼───────────────┐
+                     │     Smart Auditor Critic     │
+                     └──────────────┬───────────────┘
+                                    │ Passed / Approved
+                     ┌──────────────▼───────────────┐
+                     │   SQLite History & Cache     │
+                     └──────────────────────────────┘
+```
+
+---
+
+## 🛠️ Cấu Trúc Thư Mục Dự Án (Project Structure)
+
+```
+financial-analysis-agents/
+├── data/                       # Thư mục lưu cache.db và file PDF uploads
 ├── src/
-│   ├── domain/              # Core Domain model schemas and Interfaces (Ports)
-│   ├── infrastructure/      # Concrete Adapters (Gemini, ChromaDB, VnStock, CafeF, FinBERT)
-│   ├── agents/              # LangGraph workflow definitions, nodes, and LLM prompts
-│   └── ui/                  # Streamlit dashboard layout and Plotly visualizations
-├── tests/                   # Systematic pytest suite (unit & integration tests)
-├── .env.example             # Documented template for configuration settings
-├── .gitignore               # Ignored credentials, data folders, and caches
-└── requirements.txt         # Core project dependencies
+│   ├── agents/                 # Các đại lý AI & LangGraph Graph
+│   │   ├── nodes/              # fundamental, technical, sentiment, synthesis, critic
+│   │   ├── graph.py            # LangGraph state workflow & reflection edges
+│   │   └── prompts.py          # System instructions & prompts
+│   ├── api/                    # Tầng REST API Backend (FastAPI)
+│   │   ├── routes/             # analysis.py, history.py
+│   │   ├── main.py             # FastAPI App & Static Mounting
+│   │   └── schemas.py          # Pydantic Request/Response models
+│   ├── domain/                 # Nghiệp vụ cốt lõi
+│   │   ├── models/             # State schema
+│   │   └── services/           # validation_service.py, financial_calc.py
+│   └── infrastructure/         # Tầng giao tiếp hạ tầng
+│       ├── adapters/           # yfinance, vnstock, gemini, scraper
+│       └── database/           # SQLite connection, cache_repo, migrations
+├── static/                     # Giao diện Web tĩnh Frontend
+│   ├── index.html              # HTML5 Layout
+│   ├── style.css               # Slate Dark Mode CSS
+│   └── app.js                  # Vanilla JS REST Client
+├── tests/                      # Unit tests (21 tests passed 100%)
+│   └── unit/
+├── .gitignore
+├── pytest.ini
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## 🚀 Installation & Local Setup
+## 🚀 Hướng Dẫn Cài Đặt & Khởi Chạy (Quick Start)
 
-### 1. Clone the Repository
+### 1. Chuẩn bị Môi trường
+Yêu cầu **Python 3.10** trở lên.
+
 ```bash
-git clone https://github.com/nvfus12/financial-analysis-agents.git
+# Clone repository
+git clone https://github.com/your-username/financial-analysis-agents.git
 cd financial-analysis-agents
-```
 
-### 2. Setup Virtual Environment
-```bash
+# Tạo môi trường ảo venv
 python -m venv venv
-venv\Scripts\activate   # On Windows
-source venv/bin/activate # On Unix/macOS
-```
 
-### 3. Install Dependencies
-```bash
+# Kích hoạt venv (Windows)
+venv\Scripts\activate
+
+# Cài đặt các thư viện phụ thuộc
 pip install -r requirements.txt
 ```
 
-### 4. Configure Environment Variables
-Copy `.env.example` to `.env` and fill in your keys:
-```bash
-cp .env.example .env
-```
-*Key configurations inside `.env`:*
+### 2. Cấu hình Key API
+Tạo file `.env` tại thư mục gốc của dự án và khai báo Google Gemini API Key:
+
 ```env
-# Gemini API Key (Support comma-separated keys for load balancing)
-GEMINI_API_KEYS="your_key_1,your_key_2"
-PRIMARY_PROVIDER="gemini" # or 9router
-
-# Models Configuration
-LLM_MODEL_NAME_FLASH="gemini-2.5-flash"
-LLM_MODEL_NAME_PRO="gemini-2.5-pro"
-LLM_MODEL_NAME_EMBEDDING="models/gemini-embedding-2"
+GEMINI_API_KEY=your_gemini_api_key_here
+LLM_MODEL_NAME_FLASH=gemini-1.5-flash
 ```
 
-### 5. Launch the Dashboard
+### 3. Khởi chạy Ứng dụng Backend & Web Frontend
+Chạy lệnh khởi tạo Uvicorn Server:
+
 ```bash
-python -m streamlit run src/ui/app.py
+uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
-Open `http://localhost:8501` in your browser. 
 
-> [!NOTE]
-> **Automatic Database Initialisation**: The application features an auto-migration engine. On startup, it checks for the SQLite database configuration and automatically creates the schema tables at `data/finanalyst.db`. No manual database creation scripts are required!
+Sau khi máy chủ khởi chạy, truy cập giao diện Web trên trình duyệt tại địa chỉ:
+👉 **[http://localhost:8000](http://localhost:8000)**
+
+Tài liệu API Swagger UI có sẵn tại:
+👉 **[http://localhost:8000/docs](http://localhost:8000/docs)**
 
 ---
 
-## 🧪 Testing & Verification
+## 🧪 Chạy Kiểm Thử Tự Động (Automated Testing)
 
-### 1. Run Unit Tests (Pytest)
-To verify financial formulas, cache repositories, and market adapters (`VnStockAdapter`, `YFinanceAdapter`):
+Dự án được bảo vệ bởi bộ test tự động kiểm thử toàn bộ các chức năng Validation, API, Cache và Thuật toán:
+
 ```bash
 python -m pytest tests/
 ```
 
-### 2. Run Full CLI Integration Test
-To run a complete end-to-end multi-agent LangGraph analysis directly in the terminal (performing PDF RAG, scraping, and compiling the CIO report for FPT):
-```bash
-python tests/run_full_system_test.py
-```
+Kịch bản kiểm thử bao gồm **21/21 Unit Tests passed 100%**.
 
 ---
 
-## 📝 License
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+## 📜 Giấy Phép (License)
+
+Dự án được phân phối dưới giấy phép [MIT License](LICENSE).

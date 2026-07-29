@@ -113,6 +113,13 @@ def sentiment_node(state: AgentState) -> Dict[str, Any]:
         lang_directive = "\n\nCRITICAL: You must write the entire output analysis in Vietnamese." if lang == "vi" else "\n\nCRITICAL: You must write the entire output analysis in English."
         prompt += lang_directive
         
+        # Check for Critic revision instructions
+        critic_feedback = state.get("critic_feedback", "")
+        failed_node = state.get("failed_node", "")
+        if critic_feedback and failed_node == "sentiment":
+            logs.append(f"[Sentiment Node] Revising draft based on Auditor Feedback...")
+            prompt += f"\n\n⚠️ REVISION INSTRUCTION FROM AUDITOR:\nYour previous draft failed audit with: '{critic_feedback}'. FIX THIS IN YOUR NEW DRAFT."
+        
         insights = adapter.generate_text(
             system_instruction=SENTIMENT_SYSTEM_INSTRUCTION,
             prompt=prompt

@@ -58,6 +58,17 @@ def synthesis_node(state: AgentState) -> Dict[str, Any]:
         lang_directive = "\n\nCRITICAL: You must write the entire output analysis and final report in Vietnamese. Keep the format EXACTLY like specified, but write all text descriptions in Vietnamese." if lang == "vi" else "\n\nCRITICAL: You must write the entire output analysis and final report in English. Keep the format EXACTLY like specified, but write all text descriptions in English."
         prompt += lang_directive
         
+        # Check if Critic Agent requested revision for Synthesis
+        critic_feedback = state.get("critic_feedback", "")
+        failed_node = state.get("failed_node", "")
+        reflection_count = state.get("reflection_count", 0)
+        
+        if critic_feedback and failed_node == "synthesis":
+            logs.append(f"[Synthesis Node] Revising report based on Critic Feedback (Attempt #{reflection_count})...")
+            prompt += f"\n\n⚠️ REVISION INSTRUCTION FROM AUDITOR (Attempt #{reflection_count}):"
+            prompt += f"\nYour previous draft failed audit with this feedback: '{critic_feedback}'."
+            prompt += "\nYOU MUST FIX THESE CONTRADICTIONS/ERRORS IN YOUR NEW OUTPUT."
+        
         report_markdown = adapter.generate_text(
             system_instruction=SYNTHESIS_SYSTEM_INSTRUCTION,
             prompt=prompt,

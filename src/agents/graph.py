@@ -10,11 +10,12 @@ from src.agents.nodes.fundamental import fundamental_node
 from src.agents.nodes.technical import technical_node
 from src.agents.nodes.sentiment import sentiment_node
 from src.agents.nodes.synthesis import synthesis_node
+from src.agents.nodes.critic import critic_node
 from src.infrastructure.config import Config
 
 logger = logging.getLogger(__name__)
 
-# --- Routing functions for sequential task execution ---
+# --- Routing functions for sequential task execution & smart reflection ---
 
 def route_after_orchestrator(state: AgentState) -> str:
     raw = state.get("raw_financials", {})
@@ -46,12 +47,25 @@ def route_after_technical(state: AgentState) -> str:
         return "sentiment"
     return "synthesis"
 
+def route_after_critic(state: AgentState) -> str:
+    passed = state.get("critic_passed", True)
+    count = state.get("reflection_count", 0)
+    failed_node = state.get("failed_node", "synthesis")
+    
+    # If audit failed AND max reflection limit (< 2) not reached -> Route to exact failed node
+    if not passed and count < 2:
+        logger.info(f"[Smart Reflection] Routing back to failed node '{failed_node}' (Attempt #{count}).")
+        return failed_node
+        
+    return END
+
 # --- Graph Builder ---
 
 def build_graph():
     """
     Builds and compiles the multi-agent reasoning StateGraph.
-    Integrates persistent SQLite state checkpointer for session/history tracking.
+    Integrates persistent SQLite state checkpointer for session/history tracking,
+    and smart reflection self-correction loop.
     """
     # Initialize graph with AgentState schema
     workflow = StateGraph(AgentState)
@@ -62,6 +76,7 @@ def build_graph():
     workflow.add_node("technical", technical_node)
     workflow.add_node("sentiment", sentiment_node)
     workflow.add_node("synthesis", synthesis_node)
+    workflow.add_node("critic", critic_node)
 
     # Set Entry Point
     workflow.add_edge(START, "orchestrator")
@@ -97,11 +112,24 @@ def build_graph():
         }
     )
 
-    # Sentiment always goes to Synthesis
+    # Sentiment connects to Synthesis
     workflow.add_edge("sentiment", "synthesis")
     
-    # Synthesis terminates the workflow
-    workflow.add_edge("synthesis", END)
+    # Synthesis connects to Critic Auditor
+    workflow.add_edge("synthesis", "critic")
+
+    # Critic routes dynamically back to failed node or END
+    workflow.add_conditional_edges(
+        "critic",
+        route_after_critic,
+        {
+            "fundamental": "fundamental",
+            "technical": "technical",
+            "sentiment": "sentiment",
+            "synthesis": "synthesis",
+            END: END
+        }
+    )
 
     # Connect persistent SQLite Checkpointer (WAL mode enabled via database factory)
     db_path = Config.get_db_path()

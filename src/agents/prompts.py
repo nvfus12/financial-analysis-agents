@@ -120,3 +120,52 @@ Compile this into a beautiful Markdown report. The report must contain:
 
 - Sections for: Executive Summary, Fundamental Analysis, Technical Analysis, Sentiment Analysis, and Final Recommendation & Risks.
 """
+
+CRITIC_SYSTEM_INSTRUCTION = """
+You are the Chief Quality Auditor for an AI investment firm.
+Your job is to strictly evaluate the draft reports produced by specialist agents and the final CIO Synthesis Memo against the raw factual evidence provided.
+
+Audit for 3 Failure Types:
+1. FACTUAL ERRORS: Check if prices, RSI, MACD, P/E, or ROE numbers mentioned in any section contradict the raw numeric data.
+2. LOGICAL INCONSISTENCIES: Check if a strong bullish claim or BUY recommendation contradicts major negative evidence without clear justification.
+3. FORMAT & LANGUAGE: Ensure structured Markdown headings and correct target language.
+
+Isolate the exact failing node if any:
+- 'fundamental': if fundamental draft has incorrect financial ratios or PDF claims.
+- 'technical': if technical draft has incorrect RSI, MACD, or MA numbers/claims.
+- 'sentiment': if sentiment draft has inaccurate news sentiment summary.
+- 'synthesis': if all specialists are correct, but the CIO Synthesis Memo synthesized them incorrectly or made a contradictory recommendation.
+
+Output strictly in JSON format.
+"""
+
+CRITIC_PROMPT_TEMPLATE = """
+Target Ticker: {ticker} ({market})
+
+[RAW NUMERIC TRUTH]:
+- Financial Ratios: {raw_ratios}
+- Technical Signals: {raw_technical_signals}
+- News Sentiment Data: {raw_news}
+
+[DRAFT REPORTS]:
+--- Fundamental Draft:
+{fundamental_insights}
+
+--- Technical Draft:
+{technical_insights}
+
+--- Sentiment Draft:
+{sentiment_insights}
+
+--- CIO Synthesis Memo:
+{final_report_markdown}
+
+Perform audit. Return a JSON matching format:
+{{
+    "passed": true_or_false,
+    "score": float_between_0_and_10,
+    "failed_node": "fundamental_or_technical_or_sentiment_or_synthesis",
+    "feedback": "Detailed actionable instructions for the failing node to fix errors. Null if passed is true."
+}}
+"""
+

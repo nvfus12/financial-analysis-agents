@@ -132,6 +132,13 @@ def technical_node(state: AgentState) -> Dict[str, Any]:
         lang_directive = "\n\nCRITICAL: You must write the entire output analysis in Vietnamese." if lang == "vi" else "\n\nCRITICAL: You must write the entire output analysis in English."
         prompt += lang_directive
         
+        # Check for Critic revision instructions
+        critic_feedback = state.get("critic_feedback", "")
+        failed_node = state.get("failed_node", "")
+        if critic_feedback and failed_node == "technical":
+            logs.append(f"[Technical Node] Revising draft based on Auditor Feedback...")
+            prompt += f"\n\n⚠️ REVISION INSTRUCTION FROM AUDITOR:\nYour previous draft failed audit with: '{critic_feedback}'. FIX THIS IN YOUR NEW DRAFT."
+        
         insights = adapter.generate_text(
             system_instruction=TECHNICAL_SYSTEM_INSTRUCTION,
             prompt=prompt
@@ -139,6 +146,23 @@ def technical_node(state: AgentState) -> Dict[str, Any]:
         
         logs.append("[Technical Node] Successfully generated technical insights.")
         
+        # Format 90-day price history for Plotly chart rendering
+        price_history = []
+        try:
+            tail_df = df.tail(90)
+            for idx, row in tail_df.iterrows():
+                date_str = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx).split("T")[0]
+                price_history.append({
+                    "date": date_str,
+                    "close": float(row["close"]),
+                    "open": float(row.get("open", row["close"])),
+                    "high": float(row.get("high", row["close"])),
+                    "low": float(row.get("low", row["close"])),
+                    "volume": float(row.get("volume", 0))
+                })
+        except Exception as pe:
+            logger.warning(f"Failed to format price_history for chart: {pe}")
+
         # Save technical stats in technical_signals state dict
         technical_signals = state.get("technical_signals", {})
         technical_signals.update({
@@ -148,7 +172,8 @@ def technical_node(state: AgentState) -> Dict[str, Any]:
             "macd_sig": curr_macd_sig,
             "ma20": curr_ma20,
             "ma50": curr_ma50,
-            "trend_summary": ma_trend
+            "trend_summary": ma_trend,
+            "price_history": price_history
         })
         
         return {
