@@ -5,41 +5,41 @@
 [![LLM Engine](https://img.shields.io/badge/LLM-Gemini%203.1%20Flash-purple.svg)](https://ai.google.dev/)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 
-**FinAnalyst AI** là hệ thống trợ lý phân tích đầu tư và cổ phiếu thông minh đa đại lý (Multi-Agent System) được xây dựng trên nền tảng **FastAPI**, **LangGraph V2**, và mô hình ngôn ngữ thế hệ mới **Gemini 3.1 Flash**. Hệ thống phối hợp tự động giữa các Agent chuyên môn (Phân tích Cơ bản, Phân tích Kỹ thuật, Cảm xúc Thị trường) kết hợp bộ tự kiểm duyệt phản biện (Smart Reflection) để đưa ra báo cáo khuyến nghị đầu tư chuẩn xác.
+**FinAnalyst AI** is an intelligent, multi-agent financial research and stock analysis platform powered by **FastAPI**, **LangGraph V2**, and Google's **Gemini 3.1 Flash**. The system orchestrates specialized domain agents (Fundamental, Technical, and Market Sentiment) alongside an automated reflection auditor to deliver rigorous investment recommendations (`BUY`, `SELL`, `HOLD`).
 
 ---
 
-## 🌟 Tính Năng Nổi Bật (Key Features)
+## 🌟 Key Features
 
-### 1. 🛡️ Bộ Kiểm Soát Pre-flight Validation (`ValidationService`)
-- **Xác thực Mã Cổ phiếu Real-time**: Kiểm tra định dạng Regex (`3-5` ký tự) và **xác thực sự tồn tại thực tế trên thị trường** chứng khoán Việt Nam (VNINDEX) hoặc Mỹ (NASDAQ/NYSE) qua Yahoo Finance trước khi gọi LLM.
-- **Xác thực File BCTC (PDF)**:
-  - Kiểm tra Magic Bytes (`%PDF-`) chống giả mạo định dạng.
-  - Giới hạn dung lượng tệp (`<= 30MB`).
-  - Phát hiện tệp bị đặt mật khẩu bảo vệ hoặc bị hỏng dữ liệu.
-  - Quét mật độ từ khóa tài chính chuyên ngành (*Báo cáo tài chính, Balance sheet, Revenue, Doanh thu...*).
+### 1. 🛡️ Pre-flight Validation Service (`ValidationService`)
+- **Real-time Ticker Verification**: Performs format validation (regex `3-5` characters) and verifies active exchange listing on Vietnamese (VNINDEX) or US (NASDAQ/NYSE) markets via Yahoo Finance before making LLM calls.
+- **PDF Financial Report Verification**:
+  - Magic Bytes signature verification (`%PDF-`).
+  - Strict file size limit enforcement (`<= 30MB`).
+  - Detects password encryption and document corruption.
+  - Scans first 3 pages for financial domain keyword relevance (*Balance Sheet, Income Statement, Revenue, Assets, Liabilities...*).
 
-### 2. 🤖 Kiến Trúc Multi-Agent Phân Cấp (LangGraph V2)
-- **Deterministic Control Node (Router)**: Điều phối luồng phân tích theo chế độ được yêu cầu (`full`, `fundamental`, `technical`).
-- **Fundamental Analyst Agent**: Phân tích các chỉ số tài chính live (P/E, P/B, ROE, D/E...) kết hợp RAG trích xuất văn bản BCTC từ file PDF.
-- **Technical Analyst Agent**: Tính toán các chỉ báo kỹ thuật (RSI-14, MACD, MA20, MA50) và mô hình giá.
-- **Market Sentiment Agent**: Cào tin tức mới nhất từ các trang báo tài chính (CafeF, Vietstock) và chấm điểm cảm xúc thị trường (-1.0 đến 1.0).
-- **CIO Synthesis Agent**: Tổng hợp báo cáo khuyến nghị đầu tư cuối cùng (`BUY`, `SELL`, `HOLD`).
-- **Smart Auditor Node (Reflection Loop)**: Tự động phản biện chất lượng báo cáo. Nếu phát hiện sai sót hoặc thiếu căn cứ, Auditor yêu cầu Agent làm lại draft (tối đa 2 vòng phản biện).
+### 2. 🤖 Hierarchical Multi-Agent Architecture (LangGraph V2)
+- **Deterministic Control Node (Router)**: Routes execution flows based on selected analysis mode (`full`, `fundamental`, `technical`).
+- **Fundamental Analyst Agent**: Processes live financial ratios (P/E, P/B, ROE, D/E) and performs RAG context extraction on uploaded PDF reports.
+- **Technical Analyst Agent**: Evaluates price history, moving averages (MA20, MA50), RSI (14), MACD crossovers, and exports 90-day price action series.
+- **Market Sentiment Agent**: Scrapes financial news outlets (CafeF, Vietstock, Google News) and computes net sentiment scores (-1.0 to 1.0).
+- **CIO Synthesis Agent**: Synthesizes all specialist insights into an executive investment memo.
+- **Smart Auditor Node (Reflection Loop)**: Evaluates report quality and reasoning consistency. Triggers revisions if criteria are not met (up to 2 audit loops).
 
-### 3. 🖥️ Giao Diện Web Tách Biệt mượt mà (HTML5 + CSS3 + Vanilla JS)
-- Giao diện **Slate Dark Mode Glassmorphism** hiện đại.
-- **0ms Client-side Latency**: Chuyển đổi giữa các tab báo cáo tức thì không đơ mờ màn hình.
-- **Biểu đồ Nến Nhật Tương tác (Plotly.js)**: Hiển thị 90 phiên giá liên tục không bị khoảng thưa cuối tuần.
-- **Đa ngôn ngữ Linh hoạt**: Hỗ trợ chuyển đổi ngôn ngữ giao diện (UI) và ngôn ngữ báo cáo (Tiếng Việt 🇻🇳 / Tiếng Anh 🇺🇸).
+### 3. 🖥️ Modern Decoupled Web Interface (HTML5 / CSS3 / Vanilla JS)
+- Premium **Slate Dark Mode Glassmorphism** design.
+- **0ms Client-Side Latency**: Instant tab switching without page reloads or UI dimming.
+- **Interactive Candlestick Charting (Plotly.js)**: Displays continuous 90-day price action without weekend gaps.
+- **Localization Support**: Instant toggle between UI languages and report output languages (Vietnamese 🇻🇳 / English 🇺🇸).
 
-### 4. 🗄️ Tầng Lưu Trữ & Bộ Nhớ Tạm (SQLite Cache)
-- Cache dữ liệu giá và tin tức để tối ưu thời gian phản hồi và tiết kiệm Token API.
-- Lưu trữ lịch sử tất cả các báo cáo phân tích phục vụ xem lại hoặc quản lý.
+### 4. 🗄️ SQLite Caching & History Persistence
+- Caches raw stock price histories and sentiment scores to eliminate redundant API calls and optimize token usage.
+- Persists historical analysis reports for review and management.
 
 ---
 
-## 🏗️ Kiến Trúc Hệ Thống (System Architecture)
+## 🏗️ System Architecture
 
 ```
                      ┌──────────────────────────────┐
@@ -74,7 +74,7 @@
                      ┌──────────────▼───────────────┐
                      │     Smart Auditor Critic     │
                      └──────────────┬───────────────┘
-                                    │ Passed / Approved
+                                    │ Approved Report
                      ┌──────────────▼───────────────┐
                      │   SQLite History & Cache     │
                      └──────────────────────────────┘
@@ -82,31 +82,31 @@
 
 ---
 
-## 🛠️ Cấu Trúc Thư Mục Dự Án (Project Structure)
+## 🛠️ Project Structure
 
 ```
 financial-analysis-agents/
-├── data/                       # Thư mục lưu cache.db và file PDF uploads
+├── data/                       # Local cache database and PDF uploads
 ├── src/
-│   ├── agents/                 # Các đại lý AI & LangGraph Graph
+│   ├── agents/                 # LangGraph nodes and execution graph
 │   │   ├── nodes/              # fundamental, technical, sentiment, synthesis, critic
 │   │   ├── graph.py            # LangGraph state workflow & reflection edges
-│   │   └── prompts.py          # System instructions & prompts
-│   ├── api/                    # Tầng REST API Backend (FastAPI)
+│   │   └── prompts.py          # System instructions & templates
+│   ├── api/                    # FastAPI REST API Backend
 │   │   ├── routes/             # analysis.py, history.py
-│   │   ├── main.py             # FastAPI App & Static Mounting
-│   │   └── schemas.py          # Pydantic Request/Response models
-│   ├── domain/                 # Nghiệp vụ cốt lõi
-│   │   ├── models/             # State schema
+│   │   ├── main.py             # FastAPI App & Static Files Mount
+│   │   └── schemas.py          # Pydantic Request/Response schemas
+│   ├── domain/                 # Domain logic & models
+│   │   ├── models/             # AgentState schema
 │   │   └── services/           # validation_service.py, financial_calc.py
-│   └── infrastructure/         # Tầng giao tiếp hạ tầng
+│   └── infrastructure/         # External integrations
 │       ├── adapters/           # yfinance, vnstock, gemini, scraper
 │       └── database/           # SQLite connection, cache_repo, migrations
-├── static/                     # Giao diện Web tĩnh Frontend
+├── static/                     # Web Frontend
 │   ├── index.html              # HTML5 Layout
 │   ├── style.css               # Slate Dark Mode CSS
 │   └── app.js                  # Vanilla JS REST Client
-├── tests/                      # Unit tests (21 tests passed 100%)
+├── tests/                      # Automated test suite (21 tests)
 │   └── unit/
 ├── .gitignore
 ├── pytest.ini
@@ -116,61 +116,61 @@ financial-analysis-agents/
 
 ---
 
-## 🚀 Hướng Dẫn Cài Đặt & Khởi Chạy (Quick Start)
+## 🚀 Quick Start Guide
 
-### 1. Chuẩn bị Môi trường
-Yêu cầu **Python 3.10** trở lên.
+### 1. Environment Setup
+Requires **Python 3.10+**.
 
 ```bash
-# Clone repository
-git clone https://github.com/your-username/financial-analysis-agents.git
+# Clone the repository
+git clone https://github.com/nvfus12/financial-analysis-agents.git
 cd financial-analysis-agents
 
-# Tạo môi trường ảo venv
+# Create virtual environment
 python -m venv venv
 
-# Kích hoạt venv (Windows)
+# Activate virtual environment (Windows)
 venv\Scripts\activate
 
-# Cài đặt các thư viện phụ thuộc
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. Cấu hình Key API
-Tạo file `.env` tại thư mục gốc của dự án và khai báo Google Gemini API Key:
+### 2. API Key Configuration
+Create a `.env` file in the project root directory and set your Google Gemini API Key:
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
 LLM_MODEL_NAME_FLASH=gemini-1.5-flash
 ```
 
-### 3. Khởi chạy Ứng dụng Backend & Web Frontend
-Chạy lệnh khởi tạo Uvicorn Server:
+### 3. Run the Backend & Web Server
+Start the Uvicorn dev server:
 
 ```bash
 uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Sau khi máy chủ khởi chạy, truy cập giao diện Web trên trình duyệt tại địa chỉ:
+Open your browser and navigate to:
 👉 **[http://localhost:8000](http://localhost:8000)**
 
-Tài liệu API Swagger UI có sẵn tại:
+Interactive Swagger API documentation is available at:
 👉 **[http://localhost:8000/docs](http://localhost:8000/docs)**
 
 ---
 
-## 🧪 Chạy Kiểm Thử Tự Động (Automated Testing)
+## 🧪 Automated Testing
 
-Dự án được bảo vệ bởi bộ test tự động kiểm thử toàn bộ các chức năng Validation, API, Cache và Thuật toán:
+Run the unit test suite to verify system integrity:
 
 ```bash
 python -m pytest tests/
 ```
 
-Kịch bản kiểm thử bao gồm **21/21 Unit Tests passed 100%**.
+Test suite result: **21/21 Unit Tests Passed (100%)**.
 
 ---
 
-## 📜 Giấy Phép (License)
+## 📜 License
 
-Dự án được phân phối dưới giấy phép [MIT License](LICENSE).
+Distributed under the [MIT License](LICENSE).
