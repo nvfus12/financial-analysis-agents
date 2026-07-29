@@ -5,7 +5,7 @@
 [![LLM Engine](https://img.shields.io/badge/LLM-Gemini%203.1%20Flash-purple.svg)](https://ai.google.dev/)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 
-FinAnalyst AI is a financial analysis application built with **FastAPI**, **LangGraph V2**, and **Gemini 3.1 Flash**. It uses a multi-agent structure to gather stock data, analyze technical indicators, evaluate news sentiment, and generate investment analysis reports (`BUY`, `SELL`, `HOLD`).
+FinAnalyst AI is a financial analysis application built with **FastAPI**, **LangGraph**, and **Gemini 3.1 Flash**. It uses a multi-agent structure to gather stock data, analyze technical indicators, evaluate news sentiment, and generate investment analysis reports (`BUY`, `SELL`, `HOLD`).
 
 ---
 
@@ -19,7 +19,7 @@ FinAnalyst AI is a financial analysis application built with **FastAPI**, **Lang
   - Checks for file corruption or password protection.
   - Scans for relevant financial terms (*Balance Sheet, Income Statement, Revenue, Assets, Liabilities...*).
 
-### 2. Multi-Agent System (LangGraph V2)
+### 2. Multi-Agent System (LangGraph)
 - **Router Node**: Directs execution flow based on selected analysis mode (`full`, `fundamental`, `technical`).
 - **Fundamental Analyst Agent**: Collects financial ratios (P/E, P/B, ROE, D/E) and extracts text from uploaded PDF reports.
 - **Technical Analyst Agent**: Calculates moving averages (MA20, MA50), RSI (14), MACD, and extracts price history for charting.
