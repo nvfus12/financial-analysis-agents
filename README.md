@@ -20,12 +20,12 @@ FinAnalyst AI is a financial analysis application built with **FastAPI**, **Lang
   - Scans for relevant financial terms (*Balance Sheet, Income Statement, Revenue, Assets, Liabilities...*).
 
 ### 2. Multi-Agent System (LangGraph)
-- **Router Node**: Directs execution flow based on selected analysis mode (`full`, `fundamental`, `technical`).
+- **Routing Node**: Directs execution flow based on selected analysis mode (`full`, `fundamental`, `technical`).
 - **Fundamental Analyst Agent**: Collects financial ratios (P/E, P/B, ROE, D/E) and extracts text from uploaded PDF reports.
 - **Technical Analyst Agent**: Calculates moving averages (MA20, MA50), RSI (14), MACD, and extracts price history for charting.
 - **Market Sentiment Agent**: Scrapes financial news articles (CafeF, Vietstock, Google News) and computes sentiment scores (-1.0 to 1.0).
 - **CIO Synthesis Agent**: Combines outputs from specialized agents into a unified final report.
-- **Smart Auditor Node (Reflection Loop)**: Evaluates report completeness and triggers revisions if necessary (up to 2 iterations).
+- **Smart Auditor Node (Reflection Loop)**: Evaluates report completeness and routes revisions directly to the target failed specialist node if necessary (up to 2 iterations).
 
 ### 3. Web Interface (HTML5 / CSS3 / Vanilla JS)
 - Slate dark mode layout.
@@ -55,29 +55,29 @@ FinAnalyst AI is a financial analysis application built with **FastAPI**, **Lang
                      └──────────────┬───────────────┘
                                     │ Verified Request
                      ┌──────────────▼───────────────┐
-  ┌──────────────────┤     LangGraph Orchestrator   │
-  │                  └──────┬───────┬───────┬───────┘
-  │                         │       │       │
-  │    ┌────────────────────┘       │       └────────────────────┐
-  │    ▼                            ▼                            ▼
-  │ ┌──────────────┐            ┌──────────────┐            ┌──────────────┐
-  │ │ Fundamental  │            │  Technical   │            │  Sentiment   │
-  │ │   Analyst    │            │   Analyst    │            │   Analyst    │
-  │ └──────┬───────┘            └──────┬───────┘            └──────┬───────┘
-  │        │                            │                            │
-  │        └────────────────────┐       │       ┌────────────────────┘
-  │                             ▼       ▼       ▼
-  │                      ┌──────────────────────────────┐
-  │                      │     CIO Synthesis Agent      │
-  │                      └──────────────┬───────────────┘
-  │                                     │ Review Draft
-  │                      ┌──────────────▼───────────────┐
-  └──────────────────────┤     Smart Auditor Critic     │ (Revision Loop on Failure)
-                         └──────────────┬───────────────┘
-                                        │ Approved Report (Passed Audit)
-                         ┌──────────────▼───────────────┐
-                         │   SQLite History & Cache     │
-                         └──────────────────────────────┘
+                     │         Routing Node         │
+                     └──────┬───────┬───────┬───────┘
+                            │       │       │
+       ┌────────────────────┘       │       └────────────────────┐
+       ▼                            ▼                            ▼
+┌──────────────┐            ┌──────────────┐            ┌──────────────┐
+│ Fundamental  │◄─┐         │  Technical   │         ┌─►│  Sentiment   │
+│   Analyst    │  │         │   Analyst    │         │  │   Analyst    │
+└──────┬───────┘  │         └──────┬───────┘         │  └──────┬───────┘
+       │          │                │                 │         │
+       └──────────┼─────────┐      │      ┌──────────┼─────────┘
+                  │         ▼      ▼      ▼          │
+                  │      ┌────────────────────┐      │
+                  │      │CIO Synthesis Agent │      │
+                  │      └──────────┬─────────┘      │
+                  │                 │ Review Draft   │
+                  │      ┌──────────▼─────────┐      │
+                  └──────┤Smart Auditor Critic├──────┘ (Targeted Revision Loop)
+                         └──────────┬─────────┘
+                                    │ Approved Report (Passed Audit)
+                         ┌──────────▼─────────┐
+                         │SQLite History&Cache│
+                         └────────────────────┘
 ```
 
 ---
