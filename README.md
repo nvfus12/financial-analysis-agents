@@ -61,23 +61,23 @@ FinAnalyst AI is a financial analysis application built with **FastAPI**, **Lang
        ┌────────────────────┘       │       └────────────────────┐
        ▼                            ▼                            ▼
 ┌──────────────┐            ┌──────────────┐            ┌──────────────┐
-│ Fundamental  │            │  Technical   │            │  Sentiment   │
-│   Analyst    │            │   Analyst    │            │   Analyst    │
-└──────┬───────┘            └──────┬───────┘            └──────┬───────┘
-       │                            │                            │
-       └────────────────────┐       │       ┌────────────────────┘
-                            ▼       ▼       ▼
-                     ┌──────────────────────────────┐
-                     │     CIO Synthesis Agent      │
-                     └──────────────┬───────────────┘
-                                    │ Review Draft
-                     ┌──────────────▼───────────────┐
-                     │     Smart Auditor Critic     │
-                     └──────────────┬───────────────┘
-                                    │ Approved Report
-                     ┌──────────────▼───────────────┐
-                     │   SQLite History & Cache     │
-                     └──────────────────────────────┘
+│ Fundamental  │◄───────────│  Technical   │            │  Sentiment   │
+│   Analyst    │     │      │   Analyst    │◄───────────│   Analyst    │
+└──────┬───────┘     │      └──────┬───────┘     │      └──────┬───────┘
+       │             │             │             │             │
+       └─────────────┼─────┐       │       ┌─────┼─────────────┘
+                     │     ▼       ▼       ▼     │
+                     │  ┌────────────────────┐   │
+                     │  │CIO Synthesis Agent │   │
+                     │  └──────────┬─────────┘   │
+                     │             │ Review Draft│
+                     │  ┌──────────▼─────────┐   │
+                     └──┤Smart Auditor Critic├───┘ (Revision Loop on Failure)
+                        └──────────┬─────────┘
+                                   │ Approved Report (Passed Audit)
+                        ┌──────────▼─────────┐
+                        │SQLite History&Cache│
+                        └────────────────────┘
 ```
 
 ---
